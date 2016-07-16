@@ -4,6 +4,7 @@
 import os
 import arcpy
 from arcpy import env
+from arcpy.sa import ExtractByMask
 
 
 env.workspace = os.path.normcase("D:\yang")
@@ -48,15 +49,37 @@ def ozone_evi_match(ozone_shp_file, evi_shp_file, output_shp_file):
                                field_mappings, "WITHIN_A_DISTANCE", search_radius=20000)
 
 
+def evi_raster_shrink(evi_raster_path, feature_points_path, radius):
+    arcpy.Buffer_analysis(feature_points_path, "feature_points_buffers", radius, dissolve_option="ALL")
+    out_raster = ExtractByMask(evi_raster_path, "feature_points_buffers")
+    out_raster.save("evi_raster_shrink")
+    return out_raster
+
+
+if __name__ == "__main__":
+    evi_raster_path = os.path.join(EVI_REGION_C_SUBDIR, "US20021.250m_16_days_EVI.tif")
+    feature_points_path = "ozone.shp"
+    shrink_evi_raster = evi_raster_shrink(evi_raster_path, feature_points_path, radius=20000)
+    arcpy.RasterToPoint_conversion(shrink_evi_raster, "shrink_evi", "evi_value")
+    ozone_evi_match("ozone.shp", "shrink_evi", "output.shp")
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # central_mask_shp = os.path.join(REGION_MASK, "Central.shp")
 # arcpy.Clip_analysis(os.path.join(OZONE_SHP_SUBDIR, "aotjunaug_2000layer.shp"), central_mask_shp, "ozone.shp")
 
-ozone_shp_file = "ozone.shp"
-evi_shp_file = "evi.shp"
-output_shp_file = "output.shp"
 
-ozone_evi_match(ozone_shp_file, evi_shp_file, output_shp_file)
 
 
 
